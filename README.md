@@ -10,3 +10,12 @@ relative-term-weight-query
 #### How is the weight calculated?
 
 #### When should this be used? 
+
+#### How can I use this?
+
+```
+ Query query = new RelativeTermWeightQuery(threshold, mustMatch);
+ 
+ # threshold is the 
+ # must match is the
+```
