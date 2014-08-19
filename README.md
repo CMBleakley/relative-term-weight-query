@@ -7,7 +7,7 @@ Lucene queries with extremely frequent terms can be expensive. In a disjunctive 
 
 #### Why not use stopwords?
 
-Stopword lists requiring manual curation and don't take into account the context of a term. For example, "the" is typically considered a stopword but would completely ignore the phrase "The The" 
+Stopword lists require manual curation and don't take into account the context of a term. For example, "the" is typically considered a stopword but would completely ignore the phrase "The The" 
 
 #### Doesn't the [CommonTermsQuery](http://lucene.apache.org/core/4_6_0/queries/org/apache/lucene/queries/CommonTermsQuery.html) that handles this case?
 
