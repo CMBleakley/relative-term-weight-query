@@ -51,7 +51,7 @@ public class RelativeTermWeightQuery extends Query {
   }
 
   public RelativeTermWeightQuery(float threshold) {
-    this(threshold, 0);
+    this(threshold, Integer.MIN_VALUE);
   }
 
   @Override
@@ -114,8 +114,7 @@ public class RelativeTermWeightQuery extends Query {
 
     double runningWeight = 0.0;
     for (TermWeight weight : weights) {
-      if (runningWeight > threshold) {
-        System.out.println(runningWeight);
+      if (runningWeight > threshold && query.clauses().size() >= mm ) {
         break;
       }
       query.add(new TermQuery(weight.queryTerm), BooleanClause.Occur.SHOULD);
