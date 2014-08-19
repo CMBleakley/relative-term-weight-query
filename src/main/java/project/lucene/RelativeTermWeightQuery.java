@@ -43,6 +43,13 @@ public class RelativeTermWeightQuery extends Query {
     this.mm = mm;
   }
 
+  public void add(Term term) {
+    if (term == null) {
+      throw new IllegalArgumentException("Term must not be null");
+    }
+    this.terms.add(term);
+  }
+
   public RelativeTermWeightQuery(float threshold) {
     this(threshold, 0);
   }
@@ -60,27 +67,18 @@ public class RelativeTermWeightQuery extends Query {
     final int totalDocs = reader.numDocs();
     final TermContext[] contextArray = new TermContext[terms.size()];
     final Term[] queryTerms = this.terms.toArray(new Term[0]);
-    final Double totalIdf = 0.0;
 
     collectTermContext(reader, leaves, contextArray, queryTerms);
     return buildQuery(totalDocs, contextArray, queryTerms);
   }
 
   private class TermWeight implements Comparable<TermWeight> {
-    private double idf;
-    private Term queryTerm;
+    public final double idf;
+    public final Term queryTerm;
 
     public TermWeight(int totalDocs, int docFreq, Term queryTerm) {
       this.queryTerm = queryTerm;
       this.idf = Math.log(totalDocs * 1.0 / docFreq);
-    }
-
-    public double getIdf() {
-      return this.idf;
-    }
-
-    public Term getQueryTerm() {
-      return this.queryTerm;
     }
 
     @Override
@@ -88,15 +86,18 @@ public class RelativeTermWeightQuery extends Query {
       if (o == null) {
         return -1;
       }
-      if (o.getIdf() > idf) {
+      if (o.idf > idf) {
         return 1;
-      } else if (o.getIdf() == idf) {
-        return 0;
       } else {
         return -1;
       }
     }
   }
+
+  /* Because an index is composed of many leaves and because a term can be
+     contained within many leaves, we must visit each leaf to collect all
+     term information.
+  */
 
   protected Query buildQuery(final int totalDocs, final TermContext[] contextArray, final Term[] queryTerms) {
     BooleanQuery query = new BooleanQuery(true);
@@ -106,18 +107,19 @@ public class RelativeTermWeightQuery extends Query {
     for (int i = 0; i < queryTerms.length; i++) {
       if (contextArray[i] != null) {
         TermWeight weight = new TermWeight(totalDocs, contextArray[i].docFreq(), queryTerms[i]);
-        totalIdf += weight.getIdf();
+        totalIdf += weight.idf;
         weights.add(weight);
       }
     }
 
     double runningWeight = 0.0;
     for (TermWeight weight : weights) {
-      if (runningWeight >= threshold) {
+      if (runningWeight > threshold) {
+        System.out.println(runningWeight);
         break;
       }
-      query.add(new TermQuery(weight.getQueryTerm()), BooleanClause.Occur.SHOULD);
-      runningWeight += weight.getIdf() / totalIdf;
+      query.add(new TermQuery(weight.queryTerm), BooleanClause.Occur.SHOULD);
+      runningWeight += weight.idf / totalIdf;
     }
 
     query.setBoost(getBoost());
